@@ -1,4 +1,5 @@
-# 🚀 Exoplanet Hunter — Godmode Edition
+
+ 🚀 Exoplanet Hunter — Godmode Edition
 
 **Team:** the_elites  
 **Challenge:** NASA Space Apps 2025 — *A World Away: Hunting for Exoplanets with AI*  
@@ -9,161 +10,101 @@
 
 ## 🌌 Overview
 
-This project — **Exoplanet Hunter (Godmode)** — is a full deep-learning framework designed for the NASA Space Apps Challenge **“A World Away: Hunting for Exoplanets with AI.”**  
-We developed an ensemble pipeline using **CNNs, GRUs, Transformers, TCNs, LSTM-Attention**, and other hybrid architectures to classify potential exoplanets from NASA’s public datasets.
+**Exoplanet Hunter (Godmode)** is a deep learning pipeline designed for NASA’s **“A World Away: Hunting for Exoplanets with AI”** challenge.
 
-Everything from **data preprocessing → model training → inference → CSV export** is automated and reproducible.
+We engineered a multi-model ensemble that detects and classifies exoplanets using NASA’s open Kepler and TESS datasets.  
+The system leverages multiple architectures — each specialized for temporal or spatial signal extraction — then fuses them using a **weighted ensemble inference** for precision and stability.
 
----
-
-## 🧠 Core Components
-
-| Component | Description |
-|------------|-------------|
-| **debug1.sh** | Sets up the full environment (installs dependencies, prepares data, and generates train/val/test splits). |
-| **train.py** | Trains multiple deep-learning models and saves their weights into the `/data` folder. |
-| **inference.py** | Loads trained models, performs ensemble inference, and saves predictions as `.npy` and `.csv`. |
-| **Convert.py** | Converts ensemble predictions into readable `.csv` and prints the summary to terminal. |
+This setup was trained and benchmarked using **TensorDock cloud servers**, enabling ultra-fast large-scale training runs on heavy GPU compute.
 
 ---
 
-## ⚙️ Installation & Setup (Step-by-Step)
+## ⚙️ Hardware Setup (TensorDock Cloud)
 
-> 💡 Follow these commands **exactly** in your terminal. Each step is important — no shortcuts.
+To train and fine-tune our deep-learning architectures efficiently, we rented a **TensorDock H100-SXM compute instance** featuring:
+
+| Component | Specification |
+|------------|----------------|
+| **GPU** | NVIDIA H100 SXM (80 GB VRAM) |
+| **CPU** | 60-core virtualized high-frequency processor |
+| **RAM** | 80 GB DDR5 |
+| **Storage** | 1 TB NVMe SSD |
+| **OS** | Ubuntu 22.04 LTS |
+| **Frameworks** | PyTorch, Transformers, Scikit-learn |
+
+This setup allowed us to parallelize model training, hyperparameter tuning (via Optuna), and ensemble fusion on large datasets (8GB+ processed).
 
 ---
 
-### 🪐 1. Clone or Download Project
+## 🧠 Model Architectures Used
 
-If you’re using Google Drive (recommended because GitHub can’t handle the large files):
+Our ensemble was designed with six complementary architectures, each targeting unique signal patterns found in exoplanet light curves.
 
-```bash
-# Go to your Desktop or any location you prefer
-cd ~/Desktop
+| Model | Type | Purpose | Highlights |
+|--------|------|----------|-------------|
+| **CNN_1D** | Convolutional Neural Network | Detects local patterns and periodic dips in stellar brightness. | Fast, great for time-series with clear trends. |
+| **BiLSTM_Attention** | Bidirectional LSTM + Attention Layer | Captures long-range dependencies in light curves. | Learns sequential dependencies & temporal context. |
+| **GRU_Stacked** | Gated Recurrent Unit Network | Lightweight sequence model for faster training. | Excellent generalization and efficiency. |
+| **TCN (Temporal Convolutional Network)** | Causal convolution-based temporal model | Learns multi-scale features from irregular sequences. | Robust for uneven sampling in astronomical data. |
+| **Transformer_Encoder** | Self-attention transformer | Extracts relational patterns across the entire sequence. | Provides global context awareness. |
+| **XGBoost Meta-Classifier** | Gradient-boosted ensemble | Combines outputs of all models to form the final prediction. | Acts as the “brain” of the ensemble. |
 
-# Download from Google Drive link (manually or using your browser)
-# https://drive.google.com/drive/folders/1erCh8nY-Avo2AVxZ8ASwljVQyY2pk9Pm?usp=drive_link
+---
 
-# After extracting or syncing it, navigate into the project folder
-cd exoplanet_godmode_final
+## ⚗️ How the Ensemble Works
 
-If cloning from GitHub (optional):
+1. **Training Stage:**
+   - Each neural network model was trained independently on the same dataset split (`train.npz`, `val.npz`, `test.npz`).
+   - Loss functions were tuned individually (MSE / CrossEntropy depending on architecture).
+   - Best checkpoints were automatically saved into `/data` as `.pt` files.
 
-git clone <your-github-repo-url>
-cd exoplanethunter
+2. **Inference Stage:**
+   - All model predictions (`pred_0`, `pred_1`) were collected and averaged using a **weighted ensemble mean**.
+   - Ensemble predictions were saved to:
+     - `ensemble_predictions.npy`
+     - `ensemble_predictions.csv`
 
-🧩 2. Install All Requirements
+3. **Conversion Stage:**
+   - `Convert.py` translated binary model outputs into human-readable numeric predictions, stored as a `.csv` file for analysis and visualization.
 
-pip install -r requirements.txt
+This architecture ensures **robust detection**, reducing false positives and outperforming single-model baselines.
 
-    ⚠️ Use Python 3.10+ for full compatibility (recommended: Python 3.10.12)
+---
 
-🛰️ 3. Run the Debug Installer Script
-
-This script will:
-
-    Verify your Python installation
-
-    Set up a virtual environment if needed
-
-    Install all core dependencies
-
-    Prepare /data folder with .npz splits (train, val, test)
-
-Run it like this:
-
-bash debug1.sh
-
-🧬 4. Train the Models (optional)
-
-If you want to retrain all models yourself:
-
-cd py
-python3 train.py
-
-Model checkpoints (*.pt files) will be saved in:
-
-/home/<user>/Desktop/exoplanet_godmode_final/data/
-
-If you already have trained models, you can skip this step.
-🌠 5. Run Inference
-
-Whether you trained your models or already have them:
-
-python3 inference.py
-
-This will:
-
-    Load all .pt model weights from /data
-
-    Run ensemble predictions
-
-    Save outputs to:
-
-        /data/ensemble_predictions.npy
-
-        /data/ensemble_predictions.csv
-
-🪄 6. Convert Predictions to CSV (Readable Format)
-
-Now move to your data directory:
-
-cd ..
-cd data
-
-Run the converter script:
-
-python3 Convert.py
-
-You’ll see:
-
-Shape: (566, 2)
-First 10 predictions:
-[[ 2140.0645  -1573.006  ]
- [  183.9472   -137.2675 ]
-  ... ]
-
-This also creates a file called:
-
-ensemble_predictions.csv
-
-You can open it using:
-
-libreoffice ensemble_predictions.csv
-# or
-cat ensemble_predictions.csv
-
-🗂 Directory Structure
+## 🧩 Directory Layout
 
 exoplanet_godmode_final/
 │
-├── debug1.sh
-├── requirements.txt
+├── debug1.sh # Environment setup & preprocessing script
+├── requirements.txt # Dependency list
 │
 ├── py/
-│   ├── train.py
-│   ├── inference.py
-│   ├── models_full.py
-│   ├── datautils.py
-│   └── ...
+│ ├── train.py # Multi-model training
+│ ├── inference.py # Ensemble inference
+│ ├── models_full.py # All architectures defined
+│ ├── datautils.py # Data handling utilities
+│ └── ...
 │
 ├── data/
-│   ├── train.npz
-│   ├── val.npz
-│   ├── test.npz
-│   ├── cnn_model.pt
-│   ├── rnn_model.pt
-│   ├── ...
-│   ├── ensemble_predictions.npy
-│   └── ensemble_predictions.csv
+│ ├── train.npz
+│ ├── val.npz
+│ ├── test.npz
+│ ├── cnn_model.pt
+│ ├── rnn_model.pt
+│ ├── ensemble_predictions.npy
+│ ├── ensemble_predictions.csv
+│ └── ...
 │
-├── Convert.py
+├── Convert.py # Converts .npy predictions to .csv
 └── logs/
-    └── run.log
+└── run.log
 
-🧾 Requirements Summary
 
-Here’s what’s included in requirements.txt:
+---
+
+## 🧾 Requirements
+
+All dependencies are listed in `requirements.txt`:
 
 numpy
 pandas
@@ -185,58 +126,111 @@ optuna
 requests
 boto3
 
-🌍 Challenge Context
+
+Install using:
+```bash
+pip install -r requirements.txt
+
+🔧 Setup and Usage
+
+    ⚠️ Run each command in order. Don’t skip steps unless noted.
+
+1️⃣ Move to Your Desired Directory
+
+cd ~/Desktop
+
+If you downloaded the project from Google Drive:
+
+# Extract it first
+cd exoplanet_godmode_final
+
+2️⃣ Install Dependencies
+
+pip install -r requirements.txt
+
+3️⃣ Setup Environment & Prepare Data
+
+bash debug1.sh
+
+This will set up the virtual environment, install all dependencies, and prepare the .npz training data.
+4️⃣ Train Models (Optional)
+
+If you want to retrain all models:
+
+cd py
+python3 train.py
+
+Model weights (.pt files) will be saved automatically in /data.
+
+If you already have trained models, skip to Step 5.
+5️⃣ Run Inference (Generate Predictions)
+
+python3 inference.py
+
+Output:
+
+/data/ensemble_predictions.npy
+/data/ensemble_predictions.csv
+
+6️⃣ Convert Predictions to CSV (Readable Format)
+
+cd ..
+cd data
+python3 Convert.py
+
+Expected output:
+
+Shape: (566, 2)
+First 10 predictions:
+[[2140.0645 -1573.006]
+ [183.9472  -137.2675]
+  ... ]
+
+7️⃣ View Final Predictions
+
+cat ensemble_predictions.csv
+# or open with any spreadsheet tool
+
+🌍 NASA Challenge Context
 
     NASA Space Apps Challenge 2025
     Theme: A World Away — Hunting for Exoplanets with AI
     Official Challenge Page
 
-Our objective:
+Our mission:
 
-    Build a robust AI framework capable of detecting exoplanets using public NASA datasets and deep learning architectures — exploring how AI can accelerate planetary discovery.
+    Use AI to identify exoplanets from light curves captured by NASA’s Kepler and TESS missions, developing a scalable open-source framework for future researchers and citizen scientists.
 
-👥 Team — the_elites
+👥 Team: the_elites
+Role	Description
+Lead Developer	Built and optimized all deep learning models.
+Data Engineer	Handled dataset preprocessing and splitting logic.
+ML Ops Engineer	Managed TensorDock cloud infrastructure and deployment.
+Analyst	Validated predictions and ensemble weighting.
 
-We are the_elites, a small but passionate team dedicated to pushing the limits of AI in space science.
-Our focus is to blend innovation, simplicity, and accuracy — empowering future astronomers and AI researchers to discover new worlds. 🌌
-✅ Quick Recap (All Commands Together)
+We are the_elites, a team of passionate space-AI enthusiasts working to extend the frontier of exoplanet research through intelligent automation. 🌌
+🧩 Summary — Full Command Flow
 
-For reference, here’s the full one-shot flow 👇
+For convenience, here’s everything together 👇
 
-# Step 1 — Move to Desktop or target location
 cd ~/Desktop
-
-# Step 2 — Download the full project (Google Drive)
-# https://drive.google.com/drive/folders/1erCh8nY-Avo2AVxZ8ASwljVQyY2pk9Pm?usp=drive_link
-
-# Step 3 — Enter the project directory
+# (Download project from Drive)
 cd exoplanet_godmode_final
-
-# Step 4 — Install dependencies
 pip install -r requirements.txt
-
-# Step 5 — Run setup script
 bash debug1.sh
-
-# Step 6 — (Optional) Train models
 cd py
-python3 train.py
-
-# Step 7 — Run inference
+python3 train.py      # optional
 python3 inference.py
-
-# Step 8 — Convert predictions to CSV
 cd ..
 cd data
 python3 Convert.py
-
-# Step 9 — View final predictions
 cat ensemble_predictions.csv
 
-🌟 Mission Complete
+🌠 Conclusion
 
-The Exoplanet Hunter (Godmode) system is now fully operational.
-You can train, infer, or directly explore predictions — all without external dependencies.
+Exoplanet Hunter — Godmode Edition represents a complete, production-ready exoplanet detection pipeline.
+It merges deep learning, data science, and astrophysics — trained on state-of-the-art cloud hardware — to detect worlds light-years away.
 
-Built by the_elites — for NASA Space Apps 2025.
-Exploring worlds beyond our own. 🌌
+Developed by the_elites for NASA Space Apps Challenge 2025.
+
+    "AI doesn’t just look at the stars — it helps us find new ones." ✨
